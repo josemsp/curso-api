@@ -20,6 +20,11 @@ public class User {
 
     protected User() {}
 
+    public User(String name, String email){
+        this.name = name;
+        this.email = email;
+    }
+
     @PrePersist
     protected void OnCreate(){
         this.createdAt = Instant.now();

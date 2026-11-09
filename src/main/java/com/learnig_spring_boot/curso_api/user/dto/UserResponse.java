@@ -1,4 +1,5 @@
 package com.learnig_spring_boot.curso_api.user.dto;
+
 import java.time.Instant;
 
 public class UserResponse {
