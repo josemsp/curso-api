@@ -2,6 +2,7 @@ package com.learnig_spring_boot.curso_api.user.controller;
 
 import com.learnig_spring_boot.curso_api.user.dto.UserResponse;
 import com.learnig_spring_boot.curso_api.user.exception.EmailAlreadyExistsException;
+import com.learnig_spring_boot.curso_api.user.exception.UserNotFoundException;
 import com.learnig_spring_boot.curso_api.user.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.time.Instant;
 
@@ -99,5 +101,47 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.error").value("Conflict"))
                 .andExpect(jsonPath("$.message")
                         .value("Email already registered: jose@example.com"));
+    }
+
+//    Tests for get user
+    @Test
+    void shouldReturnUserWhenIdExists() throws Exception {
+//        Arrange
+        UserResponse userResponse = new UserResponse(
+                1L,
+                "José Salazar",
+                "jose@example.com",
+                Instant.parse("2026-11-08T20:00:00Z")
+        );
+
+        when(userService.getUserById(1L))
+                .thenReturn(userResponse);
+
+//        Act and assert
+        mockMvc.perform(
+                MockMvcRequestBuilders.get("/api/v1/users/1")
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.name").value("José Salazar"))
+                .andExpect(jsonPath("$.email").value("jose@example.com"));
+
+        verify(userService).getUserById(1L);
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenDoesNotExists() throws Exception {
+//        Arrange
+        when(userService.getUserById(999L))
+                .thenThrow(new UserNotFoundException(999L));
+
+//        Act & assert
+        mockMvc.perform(
+                MockMvcRequestBuilders.get("/api/v1/users/999")
+        )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Not Found"))
+                .andExpect(jsonPath("$.message").value("User not found with id: 999"));
     }
 }

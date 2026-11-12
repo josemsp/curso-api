@@ -74,4 +74,29 @@ public class GlobalExceptionHandler {
                 .badRequest()
                 .body(error);
     }
+
+    /**
+     * Handles requests for users that do not exist.
+     *
+     * @param exception user not found exception
+     * @param request current HTTP request
+     * @return HTTP 404 Not Found
+     */
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleUSerNotFound(
+            UserNotFoundException exception,
+            HttpServletRequest request
+    ){
+      ApiErrorResponse error = new ApiErrorResponse(
+              Instant.now(),
+              HttpStatus.NOT_FOUND.value(),
+              HttpStatus.NOT_FOUND.getReasonPhrase(),
+              exception.getMessage(),
+              request.getRequestURI()
+      );
+
+      return ResponseEntity
+              .status(HttpStatus.NOT_FOUND)
+              .body(error);
+    }
 }
