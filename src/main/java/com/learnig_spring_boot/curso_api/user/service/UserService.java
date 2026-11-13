@@ -1,6 +1,7 @@
 package com.learnig_spring_boot.curso_api.user.service;
 
 import com.learnig_spring_boot.curso_api.user.dto.CreateUserRequest;
+import com.learnig_spring_boot.curso_api.user.dto.UserPageResponse;
 import com.learnig_spring_boot.curso_api.user.dto.UserResponse;
 import com.learnig_spring_boot.curso_api.user.entity.User;
 import com.learnig_spring_boot.curso_api.user.exception.EmailAlreadyExistsException;
@@ -8,9 +9,12 @@ import com.learnig_spring_boot.curso_api.user.exception.UserNotFoundException;
 import com.learnig_spring_boot.curso_api.user.repository.UserRepository;
 
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Locale;
 
 @Service
@@ -64,6 +68,39 @@ public class UserService {
                 user.getName(),
                 user.getEmail(),
                 user.getCreatedAt()
+        );
+    }
+
+    /**
+     * Retrieves users using pagination and sorting.
+     *
+     * @param pageable pagination and sorting configuration
+     * @return a paginated response containing users
+     * */
+    public UserPageResponse getUsers(Pageable pageable){
+//        ask the repository to retrieve only the requested page.
+        Page<User> usersPage = userRepository.findAll(pageable);
+
+//        Convert database entities into response DTOs.
+        List<UserResponse> users = usersPage.getContent()
+                .stream()
+                .map(user -> new UserResponse(
+                        user.getId(),
+                        user.getName(),
+                        user.getEmail(),
+                        user.getCreatedAt()
+                ))
+                .toList();
+
+//        build our API response with pagination metadata.
+        return new UserPageResponse(
+                users,
+                usersPage.getNumber(),
+                usersPage.getSize(),
+                usersPage.getTotalElements(),
+                usersPage.getTotalPages(),
+                usersPage.isFirst(),
+                usersPage.isLast()
         );
     }
 }

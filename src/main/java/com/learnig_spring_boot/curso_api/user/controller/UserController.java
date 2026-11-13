@@ -1,12 +1,19 @@
 package com.learnig_spring_boot.curso_api.user.controller;
 
 import com.learnig_spring_boot.curso_api.user.dto.CreateUserRequest;
+import com.learnig_spring_boot.curso_api.user.dto.UserPageResponse;
 import com.learnig_spring_boot.curso_api.user.dto.UserResponse;
 import com.learnig_spring_boot.curso_api.user.service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.Set;
 
 /**
  * Rest controller responsible for handling user HTTP requests.
@@ -16,6 +23,14 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/users")
 public class UserController {
     private final UserService userService;
+
+    private static final int MAX_PAGE_SIZE = 100;
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "id",
+            "name",
+            "email",
+            "createdAt"
+    );
 
     /**
      * Constructor injection.
@@ -58,5 +73,47 @@ public class UserController {
 
         return ResponseEntity
                 .ok(response);
+    }
+
+    /**
+     * Retrieves users with pagination and sorting.
+     *
+     * @param pageable pagination and sorting configuration
+     * @return paginated list of users
+     * */
+    @GetMapping
+    public ResponseEntity<UserPageResponse> getUsers(
+            @PageableDefault(
+                    page = 0,
+                    size = 10,
+                    sort = "id",
+                    direction = Sort.Direction.ASC
+            ) Pageable pageable
+    ){
+//        prevent clients from requesting excessively large pages.
+        if(pageable.getPageSize() > MAX_PAGE_SIZE){
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Page size cannot exceed: " + MAX_PAGE_SIZE
+            );
+        }
+
+//        only allow sorting by fields exposed by our API.
+        boolean hasInvalidSortField = pageable.getSort()
+                .stream()
+                .anyMatch(
+                        order -> !ALLOWED_SORT_FIELDS.contains(order.getProperty())
+                );
+
+        if(hasInvalidSortField){
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid sort field. Allowed fields: " + ALLOWED_SORT_FIELDS
+            );
+        }
+
+        UserPageResponse response = userService.getUsers(pageable);
+
+        return ResponseEntity.ok(response);
     }
 }
