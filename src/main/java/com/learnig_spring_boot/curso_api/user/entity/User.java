@@ -18,6 +18,9 @@ public class User {
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
     protected User() {}
 
     public User(String name, String email){
@@ -44,6 +47,17 @@ public class User {
 
     public Instant getCreatedAt(){
         return createdAt;
+    }
+
+    public Instant getDeletedAt(){
+        return deletedAt;
+    }
+
+    /**
+     * Marks the user as deleted.
+     * */
+    public void softDelete(){
+        this.deletedAt = Instant.now();
     }
 
     /**

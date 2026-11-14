@@ -134,4 +134,17 @@ public class UserController {
 
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * Soft deletes an existing user.
+     *
+     * @param id the identifier of the user to delete
+     * @return an empty response with HTTP 204
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id){
+        userService.deleteUser(id);
+
+        return ResponseEntity.noContent().build();
+    }
 }

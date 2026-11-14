@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -213,5 +214,27 @@ class UserControllerTest {
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(userService);
+    }
+
+    @Test
+    void shouldDeleteUserSuccessfully() throws Exception {
+        doNothing().when(userService).deleteUser(1L);
+
+        mockMvc.perform(delete("/api/v1/users/1"))
+                .andExpect(status().isNoContent());
+
+        verify(userService).deleteUser(1L);
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenDeletingNonExistingUser() throws Exception {
+        doThrow(new UserNotFoundException(999L)).when(userService).deleteUser(999L);
+
+        mockMvc.perform(delete("/api/v1/users/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("User not found with id: 999"));
+
+        verify(userService).deleteUser(999L);
     }
 }

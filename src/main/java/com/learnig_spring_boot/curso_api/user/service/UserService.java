@@ -34,7 +34,7 @@ public class UserService {
                 .toLowerCase(Locale.ROOT);
 
 //        Check whether the normalized email already exists
-        if(userRepository.existsByEmail(normalizedEmail)){
+        if(userRepository.existsByEmailAndDeletedAtIsNull(normalizedEmail)){
             throw new EmailAlreadyExistsException(normalizedEmail);
         }
 
@@ -60,7 +60,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserResponse getUserById(Long id){
 //        Find the user or throw an exception if it does not exist.
-        User user = userRepository.findById(id)
+        User user = userRepository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
 
 //        Convert the entity into a response DTO
@@ -80,7 +80,7 @@ public class UserService {
      * */
     public UserPageResponse getUsers(Pageable pageable){
 //        ask the repository to retrieve only the requested page.
-        Page<User> usersPage = userRepository.findAll(pageable);
+        Page<User> usersPage = userRepository.findAllByDeletedAtIsNull(pageable);
 
 //        Convert database entities into response DTOs.
         List<UserResponse> users = usersPage.getContent()
@@ -125,7 +125,7 @@ public class UserService {
         String normalizedEmail = request.getEmail().trim().toLowerCase(Locale.ROOT);
 
         // Check whether another user already uses this email.
-        if(userRepository.existsByEmailAndIdNot(normalizedEmail, id)){
+        if(userRepository.existsByEmailAndIdNotAndDeletedAtIsNull(normalizedEmail, id)){
             throw new EmailAlreadyExistsException(normalizedEmail);
         }
 
@@ -139,5 +139,19 @@ public class UserService {
                 user.getEmail(),
                 user.getCreatedAt()
         );
+    }
+
+    /**
+     * Soft deletes an existing user.
+     *
+     * @param id the identifier ot the user to delete
+     * @throws UserNotFoundException if the user does not exist or was already deleted
+     * */
+    @Transactional
+    public void deleteUser(Long id){
+        User user = userRepository.findByIdAndDeletedAtIsNull(id)
+                .orElseThrow(()-> new UserNotFoundException(id));
+
+        user.softDelete();
     }
 }
