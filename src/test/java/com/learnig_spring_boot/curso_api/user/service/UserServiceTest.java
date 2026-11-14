@@ -1,6 +1,7 @@
 package com.learnig_spring_boot.curso_api.user.service;
 
 import com.learnig_spring_boot.curso_api.user.dto.CreateUserRequest;
+import com.learnig_spring_boot.curso_api.user.dto.UpdateUserRequest;
 import com.learnig_spring_boot.curso_api.user.dto.UserResponse;
 import com.learnig_spring_boot.curso_api.user.entity.User;
 import com.learnig_spring_boot.curso_api.user.exception.EmailAlreadyExistsException;
@@ -140,6 +141,114 @@ class UserServiceTest {
         );
 
         verify(userRepository).findById(userId);
+    }
+
+    @Test
+    void shouldUpdateUserSuccessfully(){
+//        arrange
+        Long userId = 1L;
+        User user = new User("Old name", "old@example.com");
+        UpdateUserRequest request = new UpdateUserRequest(
+                "New name",
+                "new@example.com"
+        );
+
+        when(userRepository.findById(userId))
+                .thenReturn(Optional.of(user));
+
+        when(userRepository.existsByEmailAndIdNot(
+                "new@example.com",
+                userId
+        ))
+                .thenReturn(false);
+
+//        act
+        UserResponse userResponse = userService.updateUser(
+                userId,
+                request
+        );
+
+//        assert
+        assertEquals("New name", userResponse.getName());
+        assertEquals("new@example.com", userResponse.getEmail());
+
+        verify(userRepository).findById(userId);
+        verify(userRepository).existsByEmailAndIdNot("new@example.com", userId);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUpdatingNonExistingUser(){
+//        arrange
+        Long userId = 999L;
+        UpdateUserRequest request = new UpdateUserRequest(
+                "New name",
+                "new@example.com"
+        );
+
+        when(userRepository.findById(userId))
+                .thenReturn(Optional.empty());
+
+//        act & assert
+        assertThrows(
+                UserNotFoundException.class,
+                ()-> userService.updateUser(userId, request)
+        );
+
+        verify(userRepository, never())
+                .existsByEmailAndIdNot(
+                        "new@example.com",
+                        userId
+                );
+    }
+
+    @Test
+    void shouldThrowExceptionWhenEmailBelongsToAnotherUser(){
+//        arrange
+        Long userId = 1L;
+        User user = new User(
+                "old name", "old@example.com"
+        );
+        UpdateUserRequest request = new UpdateUserRequest(
+                "new name", "taken@example.com"
+        );
+
+        when(userRepository.findById(userId))
+                .thenReturn(Optional.of(user));
+
+        when(userRepository.existsByEmailAndIdNot("taken@example.com", userId))
+                .thenReturn(true);
+
+//        act & assert
+        assertThrows(
+                EmailAlreadyExistsException.class,
+                () -> userService.updateUser(userId, request)
+        );
+    }
+
+    @Test
+    void shouldNormalizeNameAndEmailWhenUpdatingUser(){
+//        arrange
+        Long userId = 1L;
+        User user = new User("old name", "old@example.com");
+        UpdateUserRequest request = new UpdateUserRequest(
+                "new name",
+                "new@example.com"
+        );
+
+        when(userRepository.findById(userId))
+                .thenReturn(Optional.of(user));
+
+        when(userRepository.existsByEmailAndIdNot("new@example.com", userId))
+                .thenReturn(false);
+
+//        act
+        UserResponse response = userService.updateUser(
+                userId, request
+        );
+
+//        assert
+        assertEquals("new name", response.getName());
+        assertEquals("new@example.com", response.getEmail());
     }
 
 //    Methods

@@ -1,0 +1,42 @@
+package com.learnig_spring_boot.curso_api.user.dto;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+/**
+ * Represents the data required to update an existing user.
+ * */
+public class UpdateUserRequest {
+    @NotBlank(message = "Name is required")
+    @Size(message = "Name cannot exceed 100 characteres")
+    private String name;
+
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email must be valid")
+    @Size(max = 150, message = "Email cannot exceed 150 characteres")
+    private String email;
+
+    public UpdateUserRequest(){}
+
+    public UpdateUserRequest(String name, String email){
+        this.name = name;
+        this.email = email;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name){
+        this.name = name;
+    }
+
+    public String getEmail(){
+        return email;
+    }
+
+    public void setEmail(String email){
+        this.email = email;
+    }
+}

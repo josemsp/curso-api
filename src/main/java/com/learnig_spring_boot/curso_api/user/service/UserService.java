@@ -1,6 +1,7 @@
 package com.learnig_spring_boot.curso_api.user.service;
 
 import com.learnig_spring_boot.curso_api.user.dto.CreateUserRequest;
+import com.learnig_spring_boot.curso_api.user.dto.UpdateUserRequest;
 import com.learnig_spring_boot.curso_api.user.dto.UserPageResponse;
 import com.learnig_spring_boot.curso_api.user.dto.UserResponse;
 import com.learnig_spring_boot.curso_api.user.entity.User;
@@ -101,6 +102,42 @@ public class UserService {
                 usersPage.getTotalPages(),
                 usersPage.isFirst(),
                 usersPage.isLast()
+        );
+    }
+
+    /**
+     * Updates an existing user's information
+     *
+     * @param id the identifier ot the user to update
+     * @param request the new user information
+     * @return the updated user
+     * @throws UserNotFoundException if the user does not exist
+     * @throws EmailAlreadyExistsException if the email belongs to another user
+     * */
+    @Transactional
+    public UserResponse updateUser(Long id, UpdateUserRequest request){
+        // Find the existing user or throw an exception.
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(id));
+
+        // Normalize the input data.
+        String normalizedName = request.getName().trim();
+        String normalizedEmail = request.getEmail().trim().toLowerCase(Locale.ROOT);
+
+        // Check whether another user already uses this email.
+        if(userRepository.existsByEmailAndIdNot(normalizedEmail, id)){
+            throw new EmailAlreadyExistsException(normalizedEmail);
+        }
+
+        // Update the existing entity.
+        user.updateDetails(normalizedName, normalizedEmail);
+
+        // Convert the updated entity into a response DTO.
+        return new UserResponse(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getCreatedAt()
         );
     }
 }

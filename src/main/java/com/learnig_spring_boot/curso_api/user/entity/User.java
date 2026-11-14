@@ -45,4 +45,15 @@ public class User {
     public Instant getCreatedAt(){
         return createdAt;
     }
+
+    /**
+     * Updates the user's editable information
+     *
+     * @param name the new user name
+     * @param email the new email address
+     * */
+    public void updateDetails(String name, String email) {
+        this.name = name;
+        this.email = email;
+    }
 }

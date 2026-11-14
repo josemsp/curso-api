@@ -1,6 +1,7 @@
 package com.learnig_spring_boot.curso_api.user.controller;
 
 import com.learnig_spring_boot.curso_api.user.dto.CreateUserRequest;
+import com.learnig_spring_boot.curso_api.user.dto.UpdateUserRequest;
 import com.learnig_spring_boot.curso_api.user.dto.UserPageResponse;
 import com.learnig_spring_boot.curso_api.user.dto.UserResponse;
 import com.learnig_spring_boot.curso_api.user.service.UserService;
@@ -113,6 +114,23 @@ public class UserController {
         }
 
         UserPageResponse response = userService.getUsers(pageable);
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Updates an existing user.
+     *
+     * @param id the identifier of the user
+     * @param request the new user information
+     * @return the updated user
+     * */
+    @PutMapping("/{id}")
+    public ResponseEntity<UserResponse> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateUserRequest request
+    ){
+        UserResponse response = userService.updateUser(id, request);
 
         return ResponseEntity.ok(response);
     }
